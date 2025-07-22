@@ -8,12 +8,7 @@ exports.up = function (knex) {
     table.string("location", 255);
 
     // Foreign Keys
-    table
-      .integer("assignee_id")
-      .unsigned()
-      .references("id")
-      .inTable("users")
-      .onDelete("CASCADE");
+    table.uuid("assignee_id").references("id").inTable("users");
     table
       .integer("category_id")
       .unsigned()

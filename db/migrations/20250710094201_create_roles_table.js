@@ -1,6 +1,6 @@
 exports.up = function (knex) {
   return knex.schema.createTable("roles", (table) => {
-    table.increments("id").primary();
+    table.increments("id").primary().notNullable();
     table.string("name").unique().notNullable();
     table.timestamps(true, true);
   });

@@ -1,6 +1,6 @@
 exports.up = function (knex) {
   return knex.schema.createTable("role_permissions", (table) => {
-    table.increments("id").primary();
+    table.increments("id").primary().notNullable();
     table
       .integer("role_id")
       .unsigned()

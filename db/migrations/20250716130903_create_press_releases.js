@@ -5,12 +5,7 @@ exports.up = function (knex) {
     table.increments("press_id").primary();
     table.string("title", 255).notNullable();
     table.text("notes").nullable();
-    table
-      .integer("assignee_id")
-      .unsigned()
-      .references("id")
-      .inTable("users")
-      .onDelete("CASCADE");
+    table.uuid("assignee_id").references("id").inTable("users");
     table
       .integer("status_id")
       .unsigned()

@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const { generateUniqueId } = require("../../utils");
 
 exports.seed = async function (knex) {
   // Deletes ALL existing users
@@ -8,7 +9,7 @@ exports.seed = async function (knex) {
 
   await knex("users").insert([
     {
-      id: 1,
+      id: generateUniqueId(),
       name: "Super Admin",
       email: "superadmin@example.com",
       password: hashedPassword,

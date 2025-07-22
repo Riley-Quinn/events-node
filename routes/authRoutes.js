@@ -10,6 +10,19 @@ const {
 router.post("/login", authController.login);
 router.post("/register", authMiddleware, authController.register);
 router.post("/logout", verifyToken, authController.logout);
+
+router.get("/", verifyToken, async (req, res) => {
+  const user = req.user;
+  try {
+    if (!user) {
+      return res.status(403).json({ message: "Forbidden: Access denied" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Internal Server error" });
+  }
+});
+
 router.get("/users", verifyToken, async (req, res) => {
   const user = req.user;
 

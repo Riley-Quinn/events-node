@@ -4,7 +4,7 @@ exports.up = function (knex) {
     table.string("type"); // image, video, document, link
     table.string("url");
     table.integer("event_id").unsigned().references("id").inTable("events");
-    table.integer("uploaded_by").unsigned().references("id").inTable("users");
+    table.uuid("uploaded_by").references("id").inTable("users");
     table.timestamps(true, true);
   });
 };
