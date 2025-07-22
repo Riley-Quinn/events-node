@@ -1,11 +1,12 @@
 exports.up = function (knex) {
-  return knex.schema.createTable("events", (table) => {
+  return knex.schema.createTable("events", function (table) {
     table.increments("id").primary();
-    table.string("title");
-    table.text("description");
-    table.boolean("is_postponed").defaultTo(false);
-    table.integer("created_by").unsigned().references("id").inTable("users");
-    table.timestamps(true, true);
+    table.string("title").notNullable();
+    table.text("description").nullable();
+    table.date("date").notNullable();
+    table.time("time").notNullable();
+    table.string("location").nullable();
+    table.timestamps(true, true); // created_at & updated_at
   });
 };
 

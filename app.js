@@ -10,6 +10,9 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const pressRelease = require("./routes/pressReleaseRoutes");
 const subCategory = require("./routes/subCategoryRoutes");
+const birthdayRoutes = require("./routes/birthdayRoutes");
+const specialdays = require("./routes/importantDaysRoutes");
+const eventRoutes = require("./routes/eventRoutes");
 const app = express();
 app.use(helmet());
 app.use(
@@ -31,6 +34,9 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/press-release", pressRelease);
 app.use("/api/sub-category", subCategory);
+app.use("/api/birthdays", birthdayRoutes);
+app.use("/api/specialdays", specialdays);
+app.use("/api/events", eventRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   res.status(500).json({ message: "Something went wrong" });
