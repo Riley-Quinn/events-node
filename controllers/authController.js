@@ -57,17 +57,23 @@ exports.login = async (req, res) => {
 
   try {
     const user = await User.findByEmail(email);
-    if (!user) return res.status(404).json({ message: "Invalid Email" });
+    if (!user) {
+      return res.status(404).json({ message: "Invalid email" });
+    }
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: "Invalid credentials" });
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     const permissions = await User.getPermissions(user.id);
 
     const token = jwt.sign(
       {
         id: user.id,
+        email: user.email,
         role_id: user.role_id,
+        name: user.name,
         permissions,
       },
       process.env.JWT_SECRET,
@@ -86,8 +92,8 @@ exports.login = async (req, res) => {
       permissions,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Login failed" });
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

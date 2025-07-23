@@ -14,6 +14,7 @@ const birthdayRoutes = require("./routes/birthdayRoutes");
 const specialdays = require("./routes/importantDaysRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
+const { verifyToken } = require("./middlewares/authMiddleware");
 const app = express();
 app.use(helmet());
 app.use(
@@ -29,16 +30,16 @@ app.use(
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/roles", roleRoutes);
-app.use("/api/permissions", permissionRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/press-release", pressRelease);
-app.use("/api/sub-category", subCategory);
-app.use("/api/birthdays", birthdayRoutes);
-app.use("/api/specialdays", specialdays);
-app.use("/api/media", mediaRoutes);
-app.use("/api/events", eventRoutes);
+app.use("/api/roles", verifyToken, roleRoutes);
+app.use("/api/permissions", verifyToken, permissionRoutes);
+app.use("/api/categories", verifyToken, categoryRoutes);
+app.use("/api/tasks", verifyToken, taskRoutes);
+app.use("/api/press-release", verifyToken, pressRelease);
+app.use("/api/sub-category", verifyToken, subCategory);
+app.use("/api/birthdays", verifyToken, birthdayRoutes);
+app.use("/api/specialdays", verifyToken, specialdays);
+app.use("/api/media", verifyToken, mediaRoutes);
+app.use("/api/events", verifyToken, eventRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   res.status(500).json({ message: "Something went wrong" });

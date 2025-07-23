@@ -8,6 +8,7 @@ const { generateUniqueId } = require("../utils");
 //  Create Task
 router.post("/", async (req, res) => {
   try {
+    const user = req.user;
     const { title, description, location, assignee_id, category_id } = req.body;
     let unqId;
     let isUnique = false;
@@ -27,6 +28,7 @@ router.post("/", async (req, res) => {
       location,
       assignee_id,
       category_id,
+      created_by: user?.id,
       status_id: 1,
     };
     await Task.createTask(taskData);
@@ -64,13 +66,14 @@ router.get("/:task_id", async (req, res) => {
 // 🔹 Update Task Status
 router.put("/:task_id/status", async (req, res) => {
   try {
+    const user = req.user;
     const { task_id } = req.params;
     const { status_id } = req.body;
     const existingTask = await Task.getTaskById(task_id);
     if (!existingTask) {
       return res.status(400).json({ error: "Task not found" });
     }
-    await Task.updateTaskStatus(task_id, status_id);
+    await Task.updateTask(task_id, { status_id, updated_by: user?.id });
     res.status(200).json({ message: "Task status updated successfully" });
   } catch (err) {
     console.error(err);
@@ -80,6 +83,7 @@ router.put("/:task_id/status", async (req, res) => {
 // 🔹 Update Task
 router.put("/:task_id", async (req, res) => {
   try {
+    const user = req.user;
     const { task_id } = req.params;
     const {
       title,
@@ -96,6 +100,7 @@ router.put("/:task_id", async (req, res) => {
       assignee_id,
       category_id,
       sub_category_id,
+      updated_by: user?.id,
     };
     const existingTask = await Task.getTaskById(task_id);
     if (!existingTask) {

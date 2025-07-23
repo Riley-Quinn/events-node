@@ -1,3 +1,4 @@
+// middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const db = require("../db");
 
@@ -21,7 +22,7 @@ const authMiddleware = (req, res, next) => {
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Token missing" });
+    return res.status(401).json({ message: "Authorization token missing" });
   }
 
   const token = authHeader.split(" ")[1];
