@@ -2,13 +2,13 @@
 
 exports.up = function (knex) {
   return knex.schema.createTable("tasks", function (table) {
-    table.increments("task_id").primary();
+    table.string("task_id").primary();
     table.string("title", 255).notNullable();
     table.text("description");
     table.string("location", 255);
 
     // Foreign Keys
-    table.uuid("assignee_id").references("id").inTable("users");
+    table.string("assignee_id").references("id").inTable("users");
     table
       .integer("category_id")
       .unsigned()

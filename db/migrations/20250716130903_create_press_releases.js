@@ -3,9 +3,9 @@
 exports.up = function (knex) {
   return knex.schema.createTable("press_releases", function (table) {
     table.increments("press_id").primary();
+    table.string("assignee_id");
     table.string("title", 255).notNullable();
     table.text("notes").nullable();
-    table.uuid("assignee_id").references("id").inTable("users");
     table
       .integer("status_id")
       .unsigned()

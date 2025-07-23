@@ -3,14 +3,25 @@
 const express = require("express");
 const router = express.Router();
 const Task = require("../models/Task");
+const { generateUniqueId } = require("../utils");
 
 //  Create Task
 router.post("/", async (req, res) => {
   try {
     const { title, description, location, assignee_id, category_id } = req.body;
+    let unqId;
+    let isUnique = false;
 
+    while (!isUnique) {
+      unqId = generateUniqueId();
+      const taskData = await Task.getTaskById(unqId);
+      if (!taskData) {
+        isUnique = true;
+      }
+    }
     // Default status is "Open" (assuming status_id = 1 is "Open")
     const taskData = {
+      task_id: unqId,
       title,
       description,
       location,
@@ -18,9 +29,8 @@ router.post("/", async (req, res) => {
       category_id,
       status_id: 1,
     };
-
     await Task.createTask(taskData);
-    res.json({ message: "Task created successfully" });
+    res.status(201).json({ message: "Task created successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to create task" });
@@ -31,7 +41,7 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const tasks = await Task.getAllTasks();
-    res.json({ list: tasks });
+    res.status(200).json({ list: tasks });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch tasks" });
@@ -40,11 +50,14 @@ router.get("/", async (req, res) => {
 router.get("/:task_id", async (req, res) => {
   try {
     const { task_id } = req.params;
-    const task = await Task.getTaskById(task_id);
-    res.json(task);
+    const taskData = await Task.getTaskById(task_id);
+    if (!taskData) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+    return res.status(200).json(taskData);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch task" });
+    console.error("Error fetching getTaskById  ", err);
+    res.status(500).json({ error: "Failed to get task" });
   }
 });
 
@@ -53,9 +66,12 @@ router.put("/:task_id/status", async (req, res) => {
   try {
     const { task_id } = req.params;
     const { status_id } = req.body;
-
+    const existingTask = await Task.getTaskById(task_id);
+    if (!existingTask) {
+      return res.status(400).json({ error: "Task not found" });
+    }
     await Task.updateTaskStatus(task_id, status_id);
-    res.json({ message: "Task status updated successfully" });
+    res.status(200).json({ message: "Task status updated successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update task status" });
@@ -65,16 +81,28 @@ router.put("/:task_id/status", async (req, res) => {
 router.put("/:task_id", async (req, res) => {
   try {
     const { task_id } = req.params;
-    const { title, description, location, assignee_id, category_id } = req.body;
+    const {
+      title,
+      description,
+      location,
+      assignee_id,
+      category_id,
+      sub_category_id,
+    } = req.body;
     const taskData = {
       title,
       description,
       location,
       assignee_id,
       category_id,
+      sub_category_id,
     };
+    const existingTask = await Task.getTaskById(task_id);
+    if (!existingTask) {
+      return res.status(400).json({ error: "Task not found" });
+    }
     await Task.updateTask(task_id, taskData);
-    res.json({ message: "Task updated successfully" });
+    res.status(200).json({ message: "Task updated successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update task" });
@@ -83,10 +111,13 @@ router.put("/:task_id", async (req, res) => {
 router.delete("/:task_id", async (req, res) => {
   try {
     const { task_id } = req.params;
-
+    const existingTask = await Task.getTaskById(task_id);
+    if (!existingTask) {
+      return res.status(400).json({ error: "Task not found" });
+    }
     await Task.deleteTask(task_id);
 
-    res.json({ message: "Task deleted successfully" });
+    res.status(200).json({ message: "Task deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to delete task" });
@@ -100,7 +131,7 @@ router.post("/update-priority", async (req, res) => {
 
     await Task.updateTaskPriorities(tasks);
 
-    res.json({ message: "Priority updated successfully" });
+    res.status(200).json({ message: "Priority updated successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update task priorities" });
