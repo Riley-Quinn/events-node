@@ -1,3 +1,5 @@
+//Category.js ---> model
+
 // Category.js
 const knex = require("../db");
 
@@ -31,11 +33,14 @@ const getCategoryByName = async (categoryName) => {
     .where(knex.raw("LOWER(name) = LOWER(?)", categoryName))
     .first();
 };
-
+const deleteCategory = async (categoryId) => {
+  return knex("categories").where({ category_id: categoryId }).del();
+};
 module.exports = {
   getAllCategories,
   getCategoryId,
   createCategory,
   getCategoryByName,
   updateCategory,
+  deleteCategory,
 };

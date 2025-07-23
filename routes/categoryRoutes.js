@@ -1,4 +1,5 @@
-// categoryRoutes.js
+//categoryRoutes.js
+
 const Category = require("../models/Category");
 const express = require("express");
 const router = express.Router();
@@ -6,6 +7,7 @@ const router = express.Router();
 router.get("/", getAllCategories);
 router.post("/", createCategory);
 router.put("/:id", updateCategory);
+router.delete("/:id", deleteCategory);
 
 async function createCategory(req, res) {
   const { name } = req.body;
@@ -41,5 +43,14 @@ async function getAllCategories(req, res) {
     return res.status(500).json({ error: "Internal server error" });
   }
 }
-
+async function deleteCategory(req, res) {
+  const { id } = req.params;
+  try {
+    await Category.deleteCategory(id);
+    res.json({ message: "Category deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete Category" });
+  }
+}
 module.exports = router;

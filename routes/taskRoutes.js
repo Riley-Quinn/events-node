@@ -1,3 +1,5 @@
+//taskRoutes.js
+
 const express = require("express");
 const router = express.Router();
 const Task = require("../models/Task");
@@ -35,6 +37,16 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch tasks" });
   }
 });
+router.get("/:task_id", async (req, res) => {
+  try {
+    const { task_id } = req.params;
+    const task = await Task.getTaskById(task_id);
+    res.json(task);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch task" });
+  }
+});
 
 // 🔹 Update Task Status
 router.put("/:task_id/status", async (req, res) => {
@@ -47,6 +59,25 @@ router.put("/:task_id/status", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update task status" });
+  }
+});
+// 🔹 Update Task
+router.put("/:task_id", async (req, res) => {
+  try {
+    const { task_id } = req.params;
+    const { title, description, location, assignee_id, category_id } = req.body;
+    const taskData = {
+      title,
+      description,
+      location,
+      assignee_id,
+      category_id,
+    };
+    await Task.updateTask(task_id, taskData);
+    res.json({ message: "Task updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update task" });
   }
 });
 router.delete("/:task_id", async (req, res) => {
