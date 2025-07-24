@@ -19,6 +19,8 @@ const getAllTasks = async () => {
       "users.name as assignee_name",
       "tasks.category_id",
       "categories.name as category_name",
+      "tasks.sub_category_id",
+      "sub_categories.name as sub_category_name",
       "tasks.status_id",
       "task_status.status_name",
       "tasks.priority",
@@ -27,6 +29,11 @@ const getAllTasks = async () => {
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
+    .leftJoin(
+      "sub_categories",
+      "tasks.sub_category_id",
+      "sub_categories.sub_category_id"
+    )
     .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
     .orderBy("tasks.priority", "asc");
 };
@@ -41,6 +48,8 @@ const getTaskById = async (taskId) => {
       "users.name as assignee_name",
       "tasks.category_id",
       "categories.name as category_name",
+      "tasks.sub_category_id",
+      "sub_categories.name as sub_category_name",
       "tasks.status_id",
       "task_status.status_name",
       "tasks.priority",
@@ -49,6 +58,11 @@ const getTaskById = async (taskId) => {
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
+    .leftJoin(
+      "sub_categories",
+      "tasks.sub_category_id",
+      "sub_categories.sub_category_id"
+    )
     .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
     .where("tasks.task_id", taskId)
     .first();

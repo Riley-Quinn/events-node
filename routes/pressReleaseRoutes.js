@@ -5,7 +5,11 @@ const PressRelease = require("../models/PressRelease");
 // Create
 router.post("/create", async (req, res) => {
   try {
-    const press = await PressRelease.createPressRelease(req.body);
+    const user = req.user;
+    const press = await PressRelease.createPressRelease({
+      ...req.body,
+      created_by: user?.id,
+    });
     res.json({ message: "Press release created", press });
   } catch (err) {
     console.error(err);
@@ -36,7 +40,11 @@ router.get("/:press_id", async (req, res) => {
 // Update
 router.put("/:press_id", async (req, res) => {
   try {
-    await PressRelease.updatePressRelease(req.params.press_id, req.body);
+    const user = req.user;
+    await PressRelease.updatePressRelease(req.params.press_id, {
+      ...req.body,
+      updated_by: user?.id,
+    });
     res.json({ message: "Updated successfully" });
   } catch (err) {
     res.status(500).json({ error: "Update failed" });
