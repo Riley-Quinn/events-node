@@ -25,7 +25,8 @@ const getAllTasks = async () => {
       "task_status.status_name",
       "tasks.priority",
       "tasks.created_at",
-      "tasks.updated_at"
+      "tasks.updated_at",
+      "tasks.estimated_date"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
@@ -54,7 +55,8 @@ const getTaskById = async (taskId) => {
       "task_status.status_name",
       "tasks.priority",
       "tasks.created_at",
-      "tasks.updated_at"
+      "tasks.updated_at",
+      "tasks.estimated_date"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
@@ -67,7 +69,13 @@ const getTaskById = async (taskId) => {
     .where("tasks.task_id", taskId)
     .first();
 };
-
+const getAllStatuses = async (type = "all") => {
+  const query = knex("task_status").select("*").orderBy("status_id");
+  if (type !== "all") {
+    query.where("status_type", type);
+  }
+  return query;
+};
 const updateTaskStatus = async (taskId, status_id) => {
   return knex("tasks")
     .where({ task_id: taskId })
@@ -101,4 +109,5 @@ module.exports = {
   updateTaskPriorities,
   updateTask,
   getTaskById,
+  getAllStatuses,
 };

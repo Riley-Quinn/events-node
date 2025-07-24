@@ -9,7 +9,16 @@ const { generateUniqueId } = require("../utils");
 router.post("/", async (req, res) => {
   try {
     const user = req.user;
-    const { title, description, location, assignee_id, category_id } = req.body;
+
+    const {
+      title,
+      description,
+      location,
+      assignee_id,
+      category_id,
+      status_id,
+      estimated_date,
+    } = req.body;
     let unqId;
     let isUnique = false;
 
@@ -29,7 +38,8 @@ router.post("/", async (req, res) => {
       assignee_id,
       category_id,
       created_by: user?.id,
-      status_id: 1,
+      status_id,
+      estimated_date,
     };
     await Task.createTask(taskData);
     res.status(201).json({ message: "Task created successfully" });
@@ -39,14 +49,25 @@ router.post("/", async (req, res) => {
   }
 });
 
-//  Get All Tasks
 router.get("/", async (req, res) => {
   try {
     const tasks = await Task.getAllTasks();
     res.status(200).json({ list: tasks });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching all tasks", err);
     res.status(500).json({ error: "Failed to fetch tasks" });
+  }
+});
+
+//  Get All Tasks status
+router.get("/status/all", async (req, res) => {
+  try {
+    const { type } = req.query; // type can be 'all' or specific status
+    const statuses = await Task.getAllStatuses(type);
+    res.status(200).json({ list: statuses });
+  } catch (err) {
+    console.error("Error fetching statuses", err);
+    res.status(500).json({ message: "Failed to fetch statuses" });
   }
 });
 router.get("/:task_id", async (req, res) => {
@@ -60,6 +81,17 @@ router.get("/:task_id", async (req, res) => {
   } catch (err) {
     console.error("Error fetching getTaskById  ", err);
     res.status(500).json({ error: "Failed to get task" });
+  }
+});
+
+// ✅ GET All Task Statuses
+router.get("/status/all", async (req, res) => {
+  try {
+    const statuses = await TaskStatus.getAll();
+    res.status(200).json(statuses);
+  } catch (err) {
+    console.error("Failed to fetch task statuses", err);
+    res.status(500).json({ error: "Failed to fetch task statuses" });
   }
 });
 
@@ -92,6 +124,8 @@ router.put("/:task_id", async (req, res) => {
       assignee_id,
       category_id,
       sub_category_id,
+      estimated_date,
+      status_id,
     } = req.body;
     const taskData = {
       title,
@@ -101,6 +135,8 @@ router.put("/:task_id", async (req, res) => {
       category_id,
       sub_category_id,
       updated_by: user?.id,
+      estimated_date,
+      status_id,
     };
     const existingTask = await Task.getTaskById(task_id);
     if (!existingTask) {
