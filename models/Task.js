@@ -39,7 +39,7 @@ const getAllTasks = async () => {
     .orderBy("tasks.priority", "asc");
 };
 const getTaskById = async (taskId) => {
-  return knex("tasks")
+  return await knex("tasks")
     .select(
       "tasks.task_id",
       "tasks.title",

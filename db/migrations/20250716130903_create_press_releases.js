@@ -2,8 +2,8 @@
 
 exports.up = function (knex) {
   return knex.schema.createTable("press_releases", function (table) {
-    table.increments("press_id").primary();
-    table.string("assignee_id");
+    table.string("press_id").primary().notNullable();
+    table.string("assignee_id").references("id").inTable("users");
     table.string("title", 255).notNullable();
     table.text("notes").nullable();
     table

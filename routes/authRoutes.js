@@ -28,7 +28,9 @@ router.get("/users", verifyToken, async (req, res) => {
 
   try {
     if (user.role_id !== 1 && user.role_id !== 2) {
-      return res.status(403).json({ message: "Forbidden: Access denied" });
+      return res
+        .status(200)
+        .json({ list: [], message: "Forbidden: Access denied" });
     }
 
     const users = await User.getAllUsers();
@@ -75,14 +77,13 @@ router.delete("/users/:id", verifyToken, async (req, res) => {
 });
 // Get user by ID
 router.get("/users/:id", verifyToken, async (req, res) => {
-  const user = req.user;
-  const { id } = req.params;
-
-  if (user.role_id !== 1 && user.role_id !== 2) {
-    return res.status(403).json({ message: "Forbidden: Access denied" });
-  }
-
   try {
+    const user = req.user;
+    const { id } = req.params;
+    if (user.role_id !== 1 && user.role_id !== 2 && user?.id !== id) {
+      return res.status(403).json({ message: "Forbidden: Access denied" });
+    }
+
     const foundUser = await User.getUserById(id);
     if (!foundUser) {
       return res.status(404).json({ message: "User not found" });
