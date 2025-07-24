@@ -9,7 +9,12 @@ const Events = {
 
   update: (id, data) => knex("events").where({ id }).update(data),
 
-  delete: (id) => knex("events").where({ id }).del(),
+  delete: async (id) => {
+    return await knex.transaction(async (trx) => {
+      await trx("media").where({ event_id: id }).del();
+      await trx("events").where({ id }).del();
+    });
+  },
 };
 
 module.exports = Events;
