@@ -23,6 +23,7 @@ router.get("/", async (req, res) => {
     const data = await PressRelease.getAllPressReleases();
     res.json(data);
   } catch (err) {
+    console.error("Error fetching all press releases", err);
     res.status(500).json({ error: "Fetch failed" });
   }
 });
