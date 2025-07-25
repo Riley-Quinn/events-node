@@ -1,16 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const PressRelease = require("../models/PressRelease");
+const { generateUniqueId } = require("../utils");
 
 // Create
 router.post("/create", async (req, res) => {
   try {
     const user = req.user;
-    const press = await PressRelease.createPressRelease({
+    let unqId;
+    let isUnique = false;
+    while (!isUnique) {
+      unqId = generateUniqueId();
+      const pressReleaseData = await PressRelease.getPressReleaseById(unqId);
+      if (!pressReleaseData) {
+        isUnique = true;
+      }
+    }
+    await PressRelease.createPressRelease({
       ...req.body,
+      press_id: unqId,
       created_by: user?.id,
     });
-    res.json({ message: "Press release created", press });
+    res.json({ message: "Press release created" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Creation failed" });
