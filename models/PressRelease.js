@@ -45,7 +45,28 @@ const getAllPressReleases = async () => {
 // Get a press release by ID
 const getPressReleaseById = async (pressId) => {
   try {
-    return await knex("press_releases").where({ press_id: pressId }).first();
+    return await knex("press_releases")
+      .select(
+        "press_releases.press_id",
+        "press_releases.title",
+        "press_releases.notes",
+        "press_releases.assignee_id",
+        "users.name as assignee_name", // <-- this is what you need
+        "press_releases.status_id",
+        "task_status.status_name",
+        "press_releases.created_at",
+        "press_releases.updated_at"
+      )
+      .leftJoin("users", "press_releases.assignee_id", "users.id")
+      .leftJoin("task_status", function () {
+        this.on(
+          knex.raw("press_releases.status_id COLLATE utf8mb4_unicode_ci"),
+          "=",
+          knex.raw("task_status.status_id COLLATE utf8mb4_unicode_ci")
+        );
+      })
+      .where("press_releases.press_id", pressId)
+      .first();
   } catch (err) {
     console.error("Error fetching press release by ID:", err);
     throw err;
