@@ -24,7 +24,6 @@ const getAllCommentsByModule = async (module, moduleId) => {
     } else if (module === "press_release") {
       query.andWhere("tbl_comments.press_id", moduleId);
     }
-    console.log("qwery", query.toString());
     return await query;
   } catch (error) {
     console.error("Error fetching comments:", error);

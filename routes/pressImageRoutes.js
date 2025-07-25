@@ -2,74 +2,83 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const { s3, bucketName } = require("../config/s3");
-const PressImage = require("../models/PressImage");
+const PressImages = require("../models/PressImages");
+const uuid = require("uuid");
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Upload Image to S3 and save in DB
-router.post("/upload/:press_id", upload.single("image"), async (req, res) => {
+// Upload media to event
+router.post("/upload/:press_id", upload.single("file"), async (req, res) => {
   try {
     const { press_id } = req.params;
-    const file = req.file;
-    const uuid = Date.now();
-    const filePath = `press/${uuid}-${file.originalname}`;
+    const { originalname, mimetype, buffer } = req.file;
+    const uniqueFileName = `${uuid.v4()}_${originalname}`;
+    const s3Key = `press/${press_id}/${uniqueFileName}`;
 
-    const params = {
-      Bucket: bucketName,
-      Key: filePath,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-      ACL: "public-read",
-    };
+    await s3
+      .upload({
+        Bucket: bucketName,
+        Key: s3Key,
+        Body: buffer,
+        ContentType: mimetype,
+      })
+      .promise();
 
-    const uploadResult = await s3.upload(params).promise();
-
-    const imageData = {
+    const newMedia = {
+      type: mimetype.startsWith("image") ? "image" : "file",
+      url: s3Key, // only storing relative path
       press_id,
-      file_name: file.originalname,
-      file_url: uploadResult.Location,
-      file_path: filePath,
     };
 
-    const image = await PressImage.createPressImage(imageData);
-
-    res.json({ message: "Image uploaded", image });
+    const [id] = await PressImages.create(newMedia);
+    res.json({ message: "Uploaded", id, ...newMedia });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Image upload failed" });
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Upload failed" });
   }
 });
 
-// Get Images by Press ID
-router.get("/:press_id", async (req, res) => {
+// Get all media
+router.get("/all", async (req, res) => {
   try {
-    const images = await PressImage.getImagesByPressId(req.params.press_id);
-    res.json(images);
+    const media = await PressImages.getAll();
+    res.json(media);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch images" });
+    res.status(500).json({ error: "Failed to fetch media" });
   }
 });
 
-// Delete Image by ID
-router.delete("/:image_id", async (req, res) => {
+// Get media for a specific event
+router.get("/press/:press_id", async (req, res) => {
   try {
-    const image = await PressImage.getImageById(req.params.image_id);
+    const media = await PressImages.getByPressId(req.params.press_id);
+    res.json(media);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch media" });
+  }
+});
 
-    if (!image) {
-      return res.status(404).json({ error: "Image not found" });
+// Delete media
+// Delete media
+router.delete("/:media_id", async (req, res) => {
+  try {
+    const media = await PressImages.getById(req.params.media_id);
+    if (!media) {
+      return res.status(404).json({ error: "Media not found" });
     }
 
     await s3
-      .deleteObject({ Bucket: bucketName, Key: image.file_path })
+      .deleteObject({
+        Bucket: bucketName,
+        Key: media.url, // fix here
+      })
       .promise();
 
-    await PressImage.deleteImage(req.params.image_id);
-
-    res.json({ message: "Image deleted successfully" });
+    await PressImages.delete(req.params.media_id);
+    res.json({ message: "Deleted successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Delete error:", err);
+    res.status(500).json({ error: "Failed to delete media" });
   }
 });
 

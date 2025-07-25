@@ -1,13 +1,11 @@
-// migrations/20250716_create_press_images.js
-
 exports.up = function (knex) {
-  return knex.schema.createTable("press_images", function (table) {
+  return knex.schema.createTable("press_images", (table) => {
     table.increments("image_id").primary();
+    table.string("type"); // image, video, document, link
+    table.string("url");
     table.string("press_id").references("press_id").inTable("press_releases");
-    table.string("file_name", 255).notNullable();
-    table.string("file_url", 500).notNullable();
-    table.string("file_path", 500).notNullable();
-    table.timestamp("created_at").defaultTo(knex.fn.now());
+    table.string("uploaded_by").references("id").inTable("users");
+    table.timestamps(true, true);
   });
 };
 
