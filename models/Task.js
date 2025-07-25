@@ -26,7 +26,8 @@ const getAllTasks = async () => {
       "tasks.priority",
       "tasks.created_at",
       "tasks.updated_at",
-      "tasks.estimated_date"
+      "tasks.estimated_date",
+      "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
@@ -56,7 +57,8 @@ const getTaskById = async (taskId) => {
       "tasks.priority",
       "tasks.created_at",
       "tasks.updated_at",
-      "tasks.estimated_date"
+      "tasks.estimated_date",
+      "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")

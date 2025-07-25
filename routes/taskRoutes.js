@@ -18,6 +18,7 @@ router.post("/", async (req, res) => {
       category_id,
       status_id,
       estimated_date,
+      is_important,
     } = req.body;
     let unqId;
     let isUnique = false;
@@ -40,6 +41,7 @@ router.post("/", async (req, res) => {
       created_by: user?.id,
       status_id,
       estimated_date,
+      is_important: is_important || false,
     };
     await Task.createTask(taskData);
     res.status(201).json({ message: "Task created successfully" });
@@ -126,6 +128,7 @@ router.put("/:task_id", async (req, res) => {
       sub_category_id,
       estimated_date,
       status_id,
+      is_important,
     } = req.body;
     const taskData = {
       title,
@@ -137,6 +140,7 @@ router.put("/:task_id", async (req, res) => {
       updated_by: user?.id,
       estimated_date,
       status_id,
+      is_important: is_important || false,
     };
     const existingTask = await Task.getTaskById(task_id);
     if (!existingTask) {
