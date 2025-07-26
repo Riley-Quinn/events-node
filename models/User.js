@@ -2,7 +2,11 @@ const knex = require("../db");
 
 const User = {
   async findByEmail(email) {
-    return knex("users").where({ email }).first();
+    return knex("users")
+      .leftJoin("roles", "users.role_id", "roles.id")
+      .where("users.email", email)
+      .select("users.*", "roles.name as role_name")
+      .first();
   },
 
   async create(user) {
