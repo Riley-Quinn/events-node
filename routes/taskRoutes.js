@@ -4,7 +4,6 @@ const express = require("express");
 const router = express.Router();
 const Task = require("../models/Task");
 const { generateUniqueId } = require("../utils");
-
 //  Create Task
 router.post("/", async (req, res) => {
   try {
@@ -105,17 +104,20 @@ router.put("/:task_id/status", async (req, res) => {
     const user = req.user;
     const { task_id } = req.params;
     const { status_id } = req.body;
-    const existingTask = await Task.getTaskById(task_id);
-    if (!existingTask) {
-      return res.status(400).json({ error: "Task not found" });
-    }
-    await Task.updateTask(task_id, { status_id, updated_by: user?.id });
-    res.status(200).json({ message: "Task status updated successfully" });
+
+    await Task.updateTaskStatus(task_id, status_id, user?.id); // Call the new function
+
+    res
+      .status(200)
+      .json({ message: "Task status updated and history recorded" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update task status" });
+    res
+      .status(500)
+      .json({ error: err.message || "Failed to update task status" });
   }
 });
+
 // 🔹 Update Task
 router.put("/:task_id", async (req, res) => {
   try {
@@ -199,6 +201,16 @@ router.put("/reorder", async (req, res) => {
   } catch (err) {
     await trx.rollback();
     res.status(500).json({ error: "Failed to reorder tasks" });
+  }
+});
+router.get("/:task_id/status-flow", async (req, res) => {
+  try {
+    const { task_id } = req.params;
+    const flow = await Task.getTaskStatusFlow(task_id);
+    res.json({ flow });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get status flow" });
   }
 });
 
