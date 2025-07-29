@@ -27,11 +27,11 @@ router.get("/users", verifyToken, async (req, res) => {
   const user = req.user;
 
   try {
-    if (user.role_id !== 1 && user.role_id !== 2) {
-      return res
-        .status(200)
-        .json({ list: [], message: "Forbidden: Access denied" });
-    }
+    // if (user.role_id !== 1 && user.role_id !== 2) {
+    //   return res
+    //     .status(200)
+    //     .json({ list: [], message: "Forbidden: Access denied" });
+    // }
 
     const users = await User.getAllUsers();
     res.json(users);

@@ -27,6 +27,7 @@ const getAllTasks = async () => {
       "tasks.created_at",
       "tasks.updated_at",
       "tasks.estimated_date",
+      "tasks.start_date",
       "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
@@ -58,6 +59,7 @@ const getTaskById = async (taskId) => {
       "tasks.created_at",
       "tasks.updated_at",
       "tasks.estimated_date",
+      "tasks.start_date",
       "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
@@ -78,6 +80,99 @@ const getAllStatuses = async (type = "all") => {
   }
   return query;
 };
+const getTasksByAssignee = async (assigneeId) => {
+  return knex("tasks")
+    .select(
+      "tasks.task_id",
+      "tasks.title",
+      "tasks.description",
+      "tasks.location",
+      "tasks.assignee_id",
+      "users.name as assignee_name",
+      "tasks.category_id",
+      "categories.name as category_name",
+      "tasks.sub_category_id",
+      "sub_categories.name as sub_category_name",
+      "tasks.status_id",
+      "task_status.status_name",
+      "tasks.priority",
+      "tasks.created_at",
+      "tasks.updated_at",
+      "tasks.estimated_date",
+      "tasks.start_date",
+      "tasks.is_important"
+    )
+    .leftJoin("users", "tasks.assignee_id", "users.id")
+    .leftJoin("categories", "tasks.category_id", "categories.category_id")
+    .leftJoin(
+      "sub_categories",
+      "tasks.sub_category_id",
+      "sub_categories.sub_category_id"
+    )
+    .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
+    .where("tasks.assignee_id", assigneeId)
+    .orderBy("tasks.priority", "asc");
+};
+
+const CLOSED_STATUS_ID = 6;
+
+const getFilteredTasks = async (userId = null, showAll = false) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const query = knex("tasks")
+    .select(
+      "tasks.task_id",
+      "tasks.title",
+      "tasks.description",
+      "tasks.location",
+      "tasks.assignee_id",
+      "users.name as assignee_name",
+      "tasks.category_id",
+      "categories.name as category_name",
+      "tasks.sub_category_id",
+      "sub_categories.name as sub_category_name",
+      "tasks.status_id",
+      "task_status.status_name",
+      "tasks.priority",
+      "tasks.created_at",
+      "tasks.updated_at",
+      "tasks.estimated_date",
+      "tasks.start_date",
+      "tasks.is_important"
+    )
+    .leftJoin("users", "tasks.assignee_id", "users.id")
+    .leftJoin("categories", "tasks.category_id", "categories.category_id")
+    .leftJoin(
+      "sub_categories",
+      "tasks.sub_category_id",
+      "sub_categories.sub_category_id"
+    )
+    .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
+    .where("task_status.status_type", "task"); // ✅ only task statuses (1–6)
+
+  if (!showAll) {
+    // ✅ Toggle OFF → today + previous (not closed)
+    query.where(function () {
+      this.where("tasks.start_date", today)
+        .andWhere("tasks.status_id", "!=", CLOSED_STATUS_ID)
+        .orWhere(function () {
+          this.where("tasks.start_date", "<", today).andWhere(
+            "tasks.status_id",
+            "!=",
+            CLOSED_STATUS_ID
+          );
+        });
+    });
+  }
+  // else (showAll = true) → no extra filter, show everything
+
+  if (userId) {
+    query.andWhere("tasks.assignee_id", userId);
+  }
+
+  return query.orderBy("tasks.priority", "asc");
+};
+
 const updateTask = async (taskId, taskData) => {
   return knex("tasks")
     .where({ task_id: taskId })
@@ -131,17 +226,36 @@ const getTaskStatusFlow = async (task_id) => {
     .orderBy("t.changed_at", "asc");
 
   const flow = [];
+
   if (statusFlow.length > 0) {
+    // First status (before any change)
     flow.push({
       name: statusFlow[0].from_status,
       changed_at: null,
       changed_by: null,
     });
+
+    // Add each transition
     for (const row of statusFlow) {
       flow.push({
         name: row.to_status,
         changed_at: row.changed_at,
         changed_by: row.changed_by,
+      });
+    }
+  } else {
+    // 🔹 No history yet → fallback to current task status
+    const task = await knex("tasks")
+      .join("task_status", "tasks.status_id", "task_status.status_id")
+      .select("task_status.status_name")
+      .where("tasks.task_id", task_id)
+      .first();
+
+    if (task) {
+      flow.push({
+        name: task.status_name,
+        changed_at: null,
+        changed_by: null,
       });
     }
   }
@@ -159,4 +273,6 @@ module.exports = {
   getTaskById,
   getAllStatuses,
   getTaskStatusFlow,
+  getTasksByAssignee,
+  getFilteredTasks,
 };

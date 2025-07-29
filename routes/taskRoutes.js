@@ -1,5 +1,3 @@
-//taskRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const Task = require("../models/Task");
@@ -18,6 +16,7 @@ router.post("/", async (req, res) => {
       sub_category_id,
       status_id,
       estimated_date,
+      start_date,
       is_important,
     } = req.body;
     let unqId;
@@ -42,6 +41,7 @@ router.post("/", async (req, res) => {
       created_by: user?.id,
       status_id,
       estimated_date,
+      start_date,
       is_important: is_important || false,
     };
     await Task.createTask(taskData);
@@ -54,10 +54,26 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const tasks = await Task.getAllTasks();
+    const user = req.user;
+    const permissions = user?.permissions || [];
+    const showAll = req.query.all === "true"; // 🔹 toggle param
+
+    const hasElevatedAccess = permissions.some(
+      (p) =>
+        (p.action === "modify" && p.subject.toLowerCase() === "permission") ||
+        (p.action === "manage" && p.subject.toLowerCase() === "user")
+    );
+
+    let tasks;
+    if (hasElevatedAccess) {
+      tasks = await Task.getFilteredTasks(null, showAll); // all users
+    } else {
+      tasks = await Task.getFilteredTasks(user?.id, showAll); // only own
+    }
+
     res.status(200).json({ list: tasks });
   } catch (err) {
-    console.error("Error fetching all tasks", err);
+    console.error("Error fetching tasks", err);
     res.status(500).json({ error: "Failed to fetch tasks" });
   }
 });
@@ -98,6 +114,17 @@ router.get("/status/all", async (req, res) => {
   }
 });
 
+router.get("/:task_id/status-flow", async (req, res) => {
+  try {
+    const { task_id } = req.params;
+    const flow = await Task.getTaskStatusFlow(task_id);
+    res.json({ flow });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get status flow" });
+  }
+});
+
 // 🔹 Update Task Status
 router.put("/:task_id/status", async (req, res) => {
   try {
@@ -131,6 +158,7 @@ router.put("/:task_id", async (req, res) => {
       category_id,
       sub_category_id,
       estimated_date,
+      start_date,
       status_id,
       is_important,
     } = req.body;
@@ -143,6 +171,7 @@ router.put("/:task_id", async (req, res) => {
       sub_category_id,
       updated_by: user?.id,
       estimated_date,
+      start_date,
       status_id,
       is_important: is_important || false,
     };
@@ -201,16 +230,6 @@ router.put("/reorder", async (req, res) => {
   } catch (err) {
     await trx.rollback();
     res.status(500).json({ error: "Failed to reorder tasks" });
-  }
-});
-router.get("/:task_id/status-flow", async (req, res) => {
-  try {
-    const { task_id } = req.params;
-    const flow = await Task.getTaskStatusFlow(task_id);
-    res.json({ flow });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to get status flow" });
   }
 });
 
