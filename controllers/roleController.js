@@ -9,6 +9,21 @@ exports.getAllRoles = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch roles" });
   }
 };
+exports.getRolesForTasks = async (req, res) => {
+  try {
+    const roles = await Role.getAll();
+    res.json({
+      list: roles.map((r) => ({
+        role_id: r.role_id || r.id,
+        name: r.name,
+        is_active: r.is_active,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch roles for tasks" });
+  }
+};
 
 exports.createRole = async (req, res) => {
   const { name } = req.body;

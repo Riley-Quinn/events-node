@@ -12,6 +12,7 @@ router.post("/", async (req, res) => {
       description,
       location,
       assignee_id,
+      role_id,
       category_id,
       sub_category_id,
       status_id,
@@ -35,7 +36,8 @@ router.post("/", async (req, res) => {
       title,
       description,
       location,
-      assignee_id,
+      assignee_id: assignee_id || null,
+      role_id: assignee_id ? null : role_id || null,
       category_id,
       sub_category_id,
       created_by: user?.id,
@@ -68,7 +70,7 @@ router.get("/", async (req, res) => {
     if (hasElevatedAccess) {
       tasks = await Task.getFilteredTasks(null, showAll); // all users
     } else {
-      tasks = await Task.getFilteredTasks(user?.id, showAll); // only own
+      tasks = await Task.getFilteredTasks(user?.id, showAll, user?.role_id); // only own
     }
 
     res.status(200).json({ list: tasks });
@@ -104,15 +106,15 @@ router.get("/:task_id", async (req, res) => {
 });
 
 // ✅ GET All Task Statuses
-router.get("/status/all", async (req, res) => {
-  try {
-    const statuses = await TaskStatus.getAll();
-    res.status(200).json(statuses);
-  } catch (err) {
-    console.error("Failed to fetch task statuses", err);
-    res.status(500).json({ error: "Failed to fetch task statuses" });
-  }
-});
+// router.get("/status/all", async (req, res) => {
+//   try {
+//     const statuses = await TaskStatus.getAll();
+//     res.status(200).json(statuses);
+//   } catch (err) {
+//     console.error("Failed to fetch task statuses", err);
+//     res.status(500).json({ error: "Failed to fetch task statuses" });
+//   }
+// });
 
 router.get("/:task_id/status-flow", async (req, res) => {
   try {
@@ -155,6 +157,7 @@ router.put("/:task_id", async (req, res) => {
       description,
       location,
       assignee_id,
+      role_id,
       category_id,
       sub_category_id,
       estimated_date,
@@ -166,7 +169,8 @@ router.put("/:task_id", async (req, res) => {
       title,
       description,
       location,
-      assignee_id,
+      assignee_id: assignee_id || null,
+      role_id: assignee_id ? null : role_id || null,
       category_id,
       sub_category_id,
       updated_by: user?.id,

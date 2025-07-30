@@ -1,4 +1,4 @@
-//Task.js ---> model
+// Task.js ---> model
 
 const knex = require("../db");
 
@@ -17,6 +17,8 @@ const getAllTasks = async () => {
       "tasks.location",
       "tasks.assignee_id",
       "users.name as assignee_name",
+      "tasks.role_id",
+      "roles.name as role_name",
       "tasks.category_id",
       "categories.name as category_name",
       "tasks.sub_category_id",
@@ -31,6 +33,7 @@ const getAllTasks = async () => {
       "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
+    .leftJoin("roles", "tasks.role_id", "roles.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
     .leftJoin(
       "sub_categories",
@@ -40,6 +43,7 @@ const getAllTasks = async () => {
     .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
     .orderBy("tasks.priority", "asc");
 };
+
 const getTaskById = async (taskId) => {
   return await knex("tasks")
     .select(
@@ -49,6 +53,8 @@ const getTaskById = async (taskId) => {
       "tasks.location",
       "tasks.assignee_id",
       "users.name as assignee_name",
+      "tasks.role_id",
+      "roles.name as role_name",
       "tasks.category_id",
       "categories.name as category_name",
       "tasks.sub_category_id",
@@ -63,6 +69,7 @@ const getTaskById = async (taskId) => {
       "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
+    .leftJoin("roles", "tasks.role_id", "roles.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
     .leftJoin(
       "sub_categories",
@@ -73,6 +80,7 @@ const getTaskById = async (taskId) => {
     .where("tasks.task_id", taskId)
     .first();
 };
+
 const getAllStatuses = async (type = "all") => {
   const query = knex("task_status").select("*").orderBy("status_id");
   if (type !== "all") {
@@ -80,6 +88,7 @@ const getAllStatuses = async (type = "all") => {
   }
   return query;
 };
+
 const getTasksByAssignee = async (assigneeId) => {
   return knex("tasks")
     .select(
@@ -89,6 +98,8 @@ const getTasksByAssignee = async (assigneeId) => {
       "tasks.location",
       "tasks.assignee_id",
       "users.name as assignee_name",
+      "tasks.role_id",
+      "roles.name as role_name",
       "tasks.category_id",
       "categories.name as category_name",
       "tasks.sub_category_id",
@@ -103,6 +114,7 @@ const getTasksByAssignee = async (assigneeId) => {
       "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
+    .leftJoin("roles", "tasks.role_id", "roles.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
     .leftJoin(
       "sub_categories",
@@ -110,7 +122,12 @@ const getTasksByAssignee = async (assigneeId) => {
       "sub_categories.sub_category_id"
     )
     .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
-    .where("tasks.assignee_id", assigneeId)
+    .where(function () {
+      this.where("tasks.assignee_id", assigneeId).orWhere(
+        "tasks.role_id",
+        knex("users").select("role_id").where("id", assigneeId)
+      );
+    })
     .orderBy("tasks.priority", "asc");
 };
 
@@ -127,6 +144,8 @@ const getFilteredTasks = async (userId = null, showAll = false) => {
       "tasks.location",
       "tasks.assignee_id",
       "users.name as assignee_name",
+      "tasks.role_id",
+      "roles.name as role_name",
       "tasks.category_id",
       "categories.name as category_name",
       "tasks.sub_category_id",
@@ -141,6 +160,7 @@ const getFilteredTasks = async (userId = null, showAll = false) => {
       "tasks.is_important"
     )
     .leftJoin("users", "tasks.assignee_id", "users.id")
+    .leftJoin("roles", "tasks.role_id", "roles.id")
     .leftJoin("categories", "tasks.category_id", "categories.category_id")
     .leftJoin(
       "sub_categories",
@@ -148,10 +168,9 @@ const getFilteredTasks = async (userId = null, showAll = false) => {
       "sub_categories.sub_category_id"
     )
     .leftJoin("task_status", "tasks.status_id", "task_status.status_id")
-    .where("task_status.status_type", "task"); // ✅ only task statuses (1–6)
+    .where("task_status.status_type", "task");
 
   if (!showAll) {
-    // ✅ Toggle OFF → today + previous (not closed)
     query.where(function () {
       this.where("tasks.start_date", today)
         .andWhere("tasks.status_id", "!=", CLOSED_STATUS_ID)
@@ -164,10 +183,14 @@ const getFilteredTasks = async (userId = null, showAll = false) => {
         });
     });
   }
-  // else (showAll = true) → no extra filter, show everything
 
   if (userId) {
-    query.andWhere("tasks.assignee_id", userId);
+    query.andWhere(function () {
+      this.where("tasks.assignee_id", userId).orWhere(
+        "tasks.role_id",
+        knex("users").select("role_id").where("id", userId)
+      );
+    });
   }
 
   return query.orderBy("tasks.priority", "asc");
@@ -178,10 +201,11 @@ const updateTask = async (taskId, taskData) => {
     .where({ task_id: taskId })
     .update({ ...taskData, updated_at: knex.fn.now() });
 };
-// Function to delete a task
+
 const deleteTask = async (taskId) => {
   return knex("tasks").where({ task_id: taskId }).del();
 };
+
 const updateTaskPriorities = async (tasks) => {
   return knex.transaction(async (trx) => {
     for (const task of tasks) {
@@ -191,6 +215,7 @@ const updateTaskPriorities = async (tasks) => {
     }
   });
 };
+
 const updateTaskStatus = async (taskId, newStatusId, userId = null) => {
   const task = await knex("tasks").where("task_id", taskId).first();
   if (!task) throw new Error("Task not found");
@@ -211,6 +236,7 @@ const updateTaskStatus = async (taskId, newStatusId, userId = null) => {
 
   return { message: "Status updated and history recorded" };
 };
+
 const getTaskStatusFlow = async (task_id) => {
   const statusFlow = await knex("task_status_tracker as t")
     .join("task_status as old", "t.old_status_id", "old.status_id")
@@ -228,14 +254,12 @@ const getTaskStatusFlow = async (task_id) => {
   const flow = [];
 
   if (statusFlow.length > 0) {
-    // First status (before any change)
     flow.push({
       name: statusFlow[0].from_status,
       changed_at: null,
       changed_by: null,
     });
 
-    // Add each transition
     for (const row of statusFlow) {
       flow.push({
         name: row.to_status,
@@ -244,7 +268,6 @@ const getTaskStatusFlow = async (task_id) => {
       });
     }
   } else {
-    // 🔹 No history yet → fallback to current task status
     const task = await knex("tasks")
       .join("task_status", "tasks.status_id", "task_status.status_id")
       .select("task_status.status_name")
