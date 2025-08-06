@@ -83,7 +83,18 @@ router.post("/", async (req, res) => {
       press_id,
       comments_module,
     });
-    return res.status(201).json({ message: "commented posted" });
+    const savedComment = {
+      ...payload,
+      created_at: new Date(),
+      commented_username: user.name,
+      module,
+      moduleId,
+    };
+
+    const io = req.app.get("io");
+    io.to(`${module}-${moduleId}`).emit("new_comment", savedComment);
+
+    return res.status(201).json(savedComment);
   } catch (error) {
     console.error("error", error);
     res.status(500).json({ error: "Failed to create event" });

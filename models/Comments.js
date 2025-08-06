@@ -17,7 +17,7 @@ const getAllCommentsByModule = async (module, moduleId) => {
         "users.name as commented_username"
       )
       .where("tbl_comments.comments_module", module)
-      .orderBy("tbl_comments.created_at", "desc");
+      .orderBy("tbl_comments.created_at", "asc");
 
     if (module === "task") {
       query.andWhere("tbl_comments.task_id", moduleId);
