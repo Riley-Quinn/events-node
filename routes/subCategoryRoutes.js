@@ -49,4 +49,14 @@ router.get("/category/:categoryId", async (req, res) => {
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    await SubCategory.deleteSubCategory(req.params.id);
+    res.status(200).json({ message: "Sub Category deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting sub category:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

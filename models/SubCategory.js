@@ -24,9 +24,14 @@ const getSubCategoriesByCategory = async (categoryId) => {
   return knex("sub_categories").where({ category_id: categoryId });
 };
 
+const deleteSubCategory = async (subCategoryId) => {
+  return knex("sub_categories").where({ sub_category_id: subCategoryId }).del();
+};
+
 module.exports = {
   createSubCategory,
   updateSubCategory,
   getAllSubCategories,
   getSubCategoriesByCategory,
+  deleteSubCategory,
 };
