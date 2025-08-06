@@ -190,6 +190,7 @@ router.put("/:task_id", async (req, res) => {
     res.status(500).json({ error: "Failed to update task" });
   }
 });
+
 router.delete("/:task_id", async (req, res) => {
   try {
     const { task_id } = req.params;

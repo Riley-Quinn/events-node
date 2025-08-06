@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const helmet = require("helmet");
+require("./routes/notifications"); // <== Add this line
+
+const fcmRoutes = require("./routes/fcmRoutes");
 
 const authRoutes = require("./routes/authRoutes");
 const roleRoutes = require("./routes/roleRoutes");
@@ -30,6 +33,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api/fcm", fcmRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/roles", verifyToken, roleRoutes);
