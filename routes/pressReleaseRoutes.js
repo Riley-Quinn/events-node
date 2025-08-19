@@ -63,6 +63,36 @@ router.put("/:press_id", async (req, res) => {
   }
 });
 
+router.post("/update-priority", async (req, res) => {
+  try {
+    const { press } = req.body; // [{ task_id, priority }]
+
+    await PressRelease.updatePressReleasePriorities(press);
+
+    res.status(200).json({ message: "Priority updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update task priorities" });
+  }
+});
+
+router.put("/reorder", async (req, res) => {
+  const trx = await knex.transaction();
+  try {
+    const updates = req.body; // [{ task_id: 1, priority: 1 }, ...]
+    for (const item of updates) {
+      await knex("press_releases")
+        .where("press_id", item.press_id)
+        .update({ priority: item.priority })
+        .transacting(trx);
+    }
+    await trx.commit();
+    res.json({ message: "Priority updated" });
+  } catch (err) {
+    await trx.rollback();
+    res.status(500).json({ error: "Failed to reorder press releases" });
+  }
+});
 // Delete
 router.delete("/:press_id", async (req, res) => {
   try {

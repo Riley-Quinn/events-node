@@ -20,6 +20,7 @@ const getAllPressReleases = async () => {
         "press_releases.notes",
         "press_releases.assignee_id",
         "users.name as assignee_name",
+        "press_releases.priority",
         "press_releases.status_id",
         "task_status.status_name",
         "press_releases.created_at",
@@ -38,6 +39,7 @@ const getAllPressReleases = async () => {
           knex.raw("task_status.status_id COLLATE utf8mb4_unicode_ci")
         );
       })
+      .orderBy("priority", "asc")
       .orderBy("created_at", "desc")
   );
 };
@@ -51,7 +53,8 @@ const getPressReleaseById = async (pressId) => {
         "press_releases.title",
         "press_releases.notes",
         "press_releases.assignee_id",
-        "users.name as assignee_name", // <-- this is what you need
+        "users.name as assignee_name",
+        "press_releases.priority",
         "press_releases.status_id",
         "task_status.status_name",
         "press_releases.created_at",
@@ -88,7 +91,16 @@ const updatePressRelease = async (pressId, pressData) => {
     throw err;
   }
 };
-
+const updatePressReleasePriorities = async (pressReleases) => {
+  return knex.transaction(async (trx) => {
+    for (const press of pressReleases) {
+      await trx("press_releases").where({ press_id: press.press_id }).update({
+        priority: press.priority,
+        updated_at: knex.fn.now(),
+      });
+    }
+  });
+};
 // Delete a press release
 const deletePressRelease = async (pressId) => {
   try {
@@ -106,4 +118,5 @@ module.exports = {
   updatePressRelease,
   deletePressRelease,
   updatePressReleaseStatus,
+  updatePressReleasePriorities,
 };

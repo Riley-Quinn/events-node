@@ -18,6 +18,7 @@ router.post("/", async (req, res) => {
       status_id,
       estimated_date,
       start_date,
+      priority,
       is_important,
     } = req.body;
     let unqId;
@@ -45,6 +46,7 @@ router.post("/", async (req, res) => {
       estimated_date,
       start_date,
       is_important: is_important || false,
+      priority: priority || 2,
     };
     await Task.createTask(taskData);
     res.status(201).json({ message: "Task created successfully" });
@@ -206,11 +208,10 @@ router.delete("/:task_id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete task" });
   }
 });
-// In routes
 
 router.post("/update-priority", async (req, res) => {
   try {
-    const { tasks } = req.body; // [{ task_id, priority }]
+    const { tasks } = req.body;
 
     await Task.updateTaskPriorities(tasks);
 
@@ -223,7 +224,7 @@ router.post("/update-priority", async (req, res) => {
 router.put("/reorder", async (req, res) => {
   const trx = await knex.transaction();
   try {
-    const updates = req.body; // [{ task_id: 1, priority: 1 }, ...]
+    const updates = req.body;
     for (const item of updates) {
       await knex("tasks")
         .where("task_id", item.task_id)
