@@ -53,7 +53,9 @@ exports.seed = async function (knex) {
 
   // Org Admin gets all except modify global permissions
   for (let i = 1; i <= 20; i++) {
-    rolePermissions.push({ role_id: 2, permission_id: i });
+    if (i !== 7) {
+      rolePermissions.push({ role_id: 2, permission_id: i });
+    }
   }
 
   // Event Manager gets: view/add/delete Event, view/add/delete Media

@@ -6,6 +6,8 @@ const {
   authMiddleware,
   verifyToken,
 } = require("../middlewares/authMiddleware");
+const bcrypt = require("bcrypt");
+const { encryptPassword } = require("../utils");
 
 router.post("/login", authController.login);
 router.post("/register", authMiddleware, authController.register);
@@ -92,6 +94,37 @@ router.get("/users/:id", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("Get User By ID Error:", err);
     res.status(500).json({ message: "Failed to fetch user" });
+  }
+});
+// Change password
+router.put("/change-password", verifyToken, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!oldPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Old and new password are required" });
+    }
+
+    const user = await User.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    const hashed = await encryptPassword(newPassword);
+    await User.updatePassword(userId, hashed);
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Change Password Error:", err);
+    res.status(500).json({ message: "Failed to update password" });
   }
 });
 
