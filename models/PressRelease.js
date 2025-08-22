@@ -44,6 +44,47 @@ const getAllPressReleases = async () => {
   );
 };
 
+const getFilteredPressReleases = async (userId, showAll, roleId) => {
+  let query = knex("press_releases")
+    .select(
+      "press_releases.press_id",
+      "press_releases.title",
+      "press_releases.notes",
+      "press_releases.assignee_id",
+      "users.name as assignee_name",
+      "press_releases.priority",
+      "press_releases.status_id",
+      "task_status.status_name",
+      "press_releases.created_at",
+      "press_releases.updated_at"
+    )
+    .leftJoin("users", "press_releases.assignee_id", "users.id")
+    .leftJoin("task_status", function () {
+      this.on(
+        knex.raw("press_releases.status_id COLLATE utf8mb4_unicode_ci"),
+        "=",
+        knex.raw("task_status.status_id COLLATE utf8mb4_unicode_ci")
+      );
+    })
+    .orderBy("priority", "asc")
+    .orderBy("created_at", "desc");
+
+  if (userId) {
+    query.where(function () {
+      this.where("press_releases.assignee_id", userId).orWhere(
+        "press_releases.created_by",
+        userId
+      );
+    });
+  }
+
+  if (!showAll) {
+    query.whereNot("press_releases.status_id", "archived");
+  }
+
+  return query;
+};
+
 // Get a press release by ID
 const getPressReleaseById = async (pressId) => {
   try {
@@ -119,4 +160,5 @@ module.exports = {
   deletePressRelease,
   updatePressReleaseStatus,
   updatePressReleasePriorities,
+  getFilteredPressReleases,
 };

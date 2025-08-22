@@ -31,11 +31,34 @@ router.post("/create", async (req, res) => {
 // Get all
 router.get("/", async (req, res) => {
   try {
-    const data = await PressRelease.getAllPressReleases();
-    res.json(data);
+    const user = req.user;
+    const permissions = user?.permissions || [];
+    const showAll = req.query.all === "true";
+
+    const hasElevatedAccess = permissions.some(
+      (p) =>
+        (p.action === "modify" && p.subject.toLowerCase() === "permission") ||
+        (p.action === "manage" && p.subject.toLowerCase() === "user")
+    );
+
+    let pressReleases;
+    if (hasElevatedAccess) {
+      pressReleases = await PressRelease.getFilteredPressReleases(
+        null,
+        showAll
+      );
+    } else {
+      pressReleases = await PressRelease.getFilteredPressReleases(
+        user?.id,
+        showAll,
+        user?.role_id
+      );
+    }
+
+    res.status(200).json({ list: pressReleases });
   } catch (err) {
-    console.error("Error fetching all press releases", err);
-    res.status(500).json({ error: "Fetch failed" });
+    console.error("Error fetching press releases", err);
+    res.status(500).json({ error: "Failed to fetch press releases" });
   }
 });
 
