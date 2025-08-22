@@ -34,26 +34,17 @@ const io = new Server(server, {
 app.set("io", io);
 
 io.on("connection", (socket) => {
-  console.log("socket.io client connected");
-
   socket.on("message", (message) => {
     socket.broadcast.emit("message", message);
   });
   socket.on("join_room", ({ module, moduleId }) => {
     const room = `${module}-${moduleId}`;
     socket.join(room);
-    console.log(`User joined room: ${room}`);
   });
 
-  socket.on("disconnect", () => {
-    console.log("socket.io client disconnected");
-  });
-  socket.on("error", (error) => {
-    console.log(`socket.io error message: ${error.message}`);
-  });
+  socket.on("disconnect", () => {});
+  socket.on("error", (error) => {});
 });
 
 const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  console.log(` Server running on port ${port}`);
-});
+server.listen(port, () => {});

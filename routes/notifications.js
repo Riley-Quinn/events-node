@@ -2,28 +2,24 @@ const cron = require("node-cron");
 const moment = require("moment");
 const admin = require("firebase-admin");
 const Event = require("../models/Events");
-const knex = require("../db"); // Adjust the path as needed
+const knex = require("../db");
 const importantDays = require("../models/ImportantDays");
 
 const Birthday = require("../models/Birthdays");
-const FcmToken = require("../models/tokens"); // Adjust if needed
+const FcmToken = require("../models/tokens");
 
 cron.schedule("00 06 * * *", async () => {
   try {
     if (!process.env.ENABLE_CRON_JOB) return;
 
-    console.log(`[${new Date()}] Birthday Notification Cron Started`);
-
     const birthdays = await Birthday.getTomorrowBirthdays();
 
     if (birthdays.length === 0) {
-      console.log("No birthdays tomorrow.");
       return;
     }
 
-    const tokens = await FcmToken.getAllTokens(); // All user tokens once
+    const tokens = await FcmToken.getAllTokens();
     if (!tokens.length) {
-      console.log("No FCM tokens found.");
       return;
     }
 
@@ -42,15 +38,8 @@ cron.schedule("00 06 * * *", async () => {
         tokens: allUserTokens,
       };
 
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(
-        `[${new Date()}] Sent birthday notification for ${person.name} to ${
-          response.successCount
-        } users`
-      );
+      await admin.messaging().sendEachForMulticast(message);
     }
-
-    console.log(`[${new Date()}] Birthday Notification Cron Completed`);
   } catch (err) {
     console.error(`[${new Date()}] Birthday Cron Error: ${err}`);
   }
@@ -60,18 +49,14 @@ cron.schedule("00 06 * * *", async () => {
   try {
     if (!process.env.ENABLE_CRON_JOB) return;
 
-    console.log(`[${new Date()}] importantDays Notification Cron Started`);
-
-    const events = await importantDays.getTomorrowImportantDays(); // Make sure this is correctly exported in your model
+    const events = await importantDays.getTomorrowImportantDays();
 
     if (!events || events.length === 0) {
-      console.log("No important days tomorrow.");
       return;
     }
 
     const tokens = await FcmToken.getAllTokens();
     if (!tokens.length) {
-      console.log("No FCM tokens found.");
       return;
     }
 
@@ -90,15 +75,8 @@ cron.schedule("00 06 * * *", async () => {
         tokens: allUserTokens,
       };
 
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(
-        `[${new Date()}] Sent notification for ${event.name} to ${
-          response.successCount
-        } users`
-      );
+      await admin.messaging().sendEachForMulticast(message);
     }
-
-    console.log(`[${new Date()}] importantDays Notification Cron Completed`);
   } catch (err) {
     console.error(`[${new Date()}] importantDays Cron Error: ${err}`);
   }
@@ -108,14 +86,11 @@ cron.schedule("00 09 * * *", async () => {
   try {
     if (!process.env.ENABLE_CRON_JOB) return;
 
-    console.log(`[${new Date()}] Event Notification Cron Started`);
-
     const rolesWithViewEventPerm = await knex("role_permissions")
       .where("permission_id", 1)
       .pluck("role_id");
 
     if (!rolesWithViewEventPerm.length) {
-      console.log("❌ No roles with view_event permission.");
       return;
     }
 
@@ -124,7 +99,6 @@ cron.schedule("00 09 * * *", async () => {
       .pluck("id");
 
     if (!usersWithRoles.length) {
-      console.log("❌ No users with required roles.");
       return;
     }
 
@@ -133,7 +107,6 @@ cron.schedule("00 09 * * *", async () => {
       .pluck("fcm_token");
 
     if (!tokens.length) {
-      console.log("❌ No FCM tokens found for eligible users.");
       return;
     }
 
@@ -148,7 +121,6 @@ cron.schedule("00 09 * * *", async () => {
       .andWhere("time", "<=", oneHourLater);
 
     if (!upcomingEvents.length) {
-      console.log("✅ No events starting in 1 hour.");
       return;
     }
 
@@ -165,13 +137,8 @@ cron.schedule("00 09 * * *", async () => {
         tokens: tokens,
       };
 
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(
-        `✅ Sent notification for '${event.title}' to ${response.successCount} users`
-      );
+      await admin.messaging().sendEachForMulticast(message);
     }
-
-    console.log(`[${new Date()}] Event Notification Cron Completed`);
   } catch (err) {
     console.error(`[${new Date()}] Event Cron Error: ${err.message}`);
   }
@@ -180,8 +147,6 @@ cron.schedule("0 * * * *", async () => {
   try {
     if (!process.env.ENABLE_CRON_JOB) return;
 
-    console.log(`[${new Date()}] Task Notification Cron Started`);
-
     const today = moment().format("YYYY-MM-DD");
 
     const todayTasks = await knex("tasks")
@@ -189,7 +154,6 @@ cron.schedule("0 * * * *", async () => {
       .andWhereRaw("DATE(start_date) = ?", [today]);
 
     if (!todayTasks.length) {
-      console.log("✅ No tasks scheduled for today.");
       return;
     }
 
@@ -201,7 +165,6 @@ cron.schedule("0 * * * *", async () => {
         .pluck("fcm_token");
 
       if (!tokens || tokens.length === 0) {
-        console.log(`❌ No FCM token found for user ${assignee_id}`);
         continue;
       }
 
@@ -218,14 +181,8 @@ cron.schedule("0 * * * *", async () => {
         },
         tokens: tokens,
       };
-
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(
-        `✅ Notification sent for task '${title}' to ${response.successCount} users.`
-      );
+      await admin.messaging().sendEachForMulticast(message);
     }
-
-    console.log(`[${new Date()}] Task Notification Cron Completed`);
   } catch (err) {
     console.error(`[${new Date()}] Task Cron Error: ${err.message}`);
   }
@@ -235,8 +192,6 @@ cron.schedule("0 * * * *", async () => {
   try {
     if (!process.env.ENABLE_CRON_JOB) return;
 
-    console.log(`[${new Date()}] Task Notification Cron Started`);
-
     const today = moment().format("YYYY-MM-DD");
 
     const todayTasks = await knex("tasks")
@@ -244,7 +199,6 @@ cron.schedule("0 * * * *", async () => {
       .andWhereRaw("DATE(start_date) = ?", [today]);
 
     if (!todayTasks.length) {
-      console.log("✅ No tasks scheduled for today.");
       return;
     }
 
@@ -268,7 +222,6 @@ cron.schedule("0 * * * *", async () => {
         .pluck("fcm_token");
 
       if (!tokens || tokens.length === 0) {
-        console.log(`❌ No FCM token found for ${assigneeName}`);
         continue;
       }
 
@@ -284,14 +237,8 @@ cron.schedule("0 * * * *", async () => {
         tokens: tokens,
       };
 
-      const response = await admin.messaging().sendEachForMulticast(message);
-
-      console.log(
-        ` Notification sent: Task '${title}' assigned to ${assigneeName} by ${assignerName}`
-      );
+      await admin.messaging().sendEachForMulticast(message);
     }
-
-    console.log(`[${new Date()}] Task Notification Cron Completed`);
   } catch (err) {
     console.error(`[${new Date()}] Task Cron Error: ${err.message}`);
   }
