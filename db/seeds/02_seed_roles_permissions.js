@@ -1,5 +1,8 @@
 exports.seed = async function (knex) {
   // Clear existing data
+  await knex("tbl_comments").del();
+  await knex("tasks").del();
+
   await knex("role_permissions").del();
   await knex("permissions").del();
   await knex("roles").del();
@@ -25,6 +28,18 @@ exports.seed = async function (knex) {
     { id: 6, action: "delete", subject: "Media" },
     { id: 7, action: "manage", subject: "User" },
     { id: 8, action: "modify", subject: "Permission" },
+    { id: 9, action: "add", subject: "Task" },
+    { id: 10, action: "delete", subject: "Task" },
+    { id: 11, action: "view", subject: "Task" },
+    { id: 12, action: "add", subject: "PressRelease" },
+    { id: 13, action: "delete", subject: "PressRelease" },
+    { id: 14, action: "view", subject: "PressRelease" },
+    { id: 15, action: "add", subject: "Birthday" },
+    { id: 16, action: "delete", subject: "Birthday" },
+    { id: 17, action: "view", subject: "Birthday" },
+    { id: 18, action: "add", subject: "ImportantDays" },
+    { id: 19, action: "delete", subject: "ImportantDays" },
+    { id: 20, action: "view", subject: "ImportantDays" },
   ];
   await knex("permissions").insert(permissions);
 
@@ -32,13 +47,15 @@ exports.seed = async function (knex) {
   const rolePermissions = [];
 
   // Super Admin gets everything
-  for (let i = 1; i <= 8; i++) {
+  for (let i = 1; i <= 20; i++) {
     rolePermissions.push({ role_id: 1, permission_id: i });
   }
 
   // Org Admin gets all except modify global permissions
-  for (let i = 1; i <= 8; i++) {
-    rolePermissions.push({ role_id: 2, permission_id: i });
+  for (let i = 1; i <= 20; i++) {
+    if (i !== 7) {
+      rolePermissions.push({ role_id: 2, permission_id: i });
+    }
   }
 
   // Event Manager gets: view/add/delete Event, view/add/delete Media

@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const db = require("../db");
@@ -61,6 +61,11 @@ exports.login = async (req, res) => {
       return res.status(404).json({ message: "Invalid email" });
     }
 
+    if (user.is_active !== 1) {
+      return res
+        .status(403)
+        .json({ message: "Acount is inactive.Please contact support team" });
+    }
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });

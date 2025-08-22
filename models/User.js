@@ -21,11 +21,13 @@ const User = {
       .where("users.id", userId)
       .select("permissions.action", "permissions.subject");
   },
+
   async getAllUsers() {
     return knex("users")
       .join("roles", "users.role_id", "roles.id")
       .select("users.*", "roles.name as role_name");
   },
+
   async getUserById(id) {
     return knex("users")
       .join("roles", "users.role_id", "roles.id")
@@ -33,6 +35,7 @@ const User = {
       .where("users.id", id)
       .first();
   },
+
   async updateUser(id, data) {
     const { name, email, role_id, phone, address, is_active } = data;
     return knex("users").where({ id }).update({
@@ -48,6 +51,13 @@ const User = {
 
   async deleteUser(id) {
     return knex("users").where({ id }).del();
+  },
+
+  async updatePassword(id, hashedPassword) {
+    return knex("users").where({ id }).update({
+      password: hashedPassword,
+      updated_at: knex.fn.now(),
+    });
   },
 };
 

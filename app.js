@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const helmet = require("helmet");
+require("./routes/notifications"); // <== Add this line
+
+const fcmRoutes = require("./routes/fcmRoutes");
 
 const authRoutes = require("./routes/authRoutes");
 const roleRoutes = require("./routes/roleRoutes");
@@ -16,6 +19,7 @@ const eventRoutes = require("./routes/eventRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const pressImageRoutes = require("./routes/pressImageRoutes");
+const superadminDraftRoutes = require("./routes/superadminDraftRoutes");
 const { verifyToken } = require("./middlewares/authMiddleware");
 const app = express();
 app.use(helmet());
@@ -30,6 +34,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api/fcm", fcmRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/roles", verifyToken, roleRoutes);
@@ -44,6 +49,7 @@ app.use("/api/media", verifyToken, mediaRoutes);
 app.use("/api/events", verifyToken, eventRoutes);
 app.use("/api/comments", verifyToken, commentRoutes);
 app.use("/api/press-media", verifyToken, pressImageRoutes);
+app.use("/api/drafts", superadminDraftRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   res.status(500).json({ message: "Something went wrong" });
