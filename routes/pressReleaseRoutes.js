@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const PressRelease = require("../models/PressRelease");
 const { generateUniqueId } = require("../utils");
+const knex = require("../db");
 
 // Create
 router.post("/create", async (req, res) => {
@@ -119,12 +120,31 @@ router.put("/reorder", async (req, res) => {
 // Delete
 router.delete("/:press_id", async (req, res) => {
   try {
-    await PressRelease.deletePressRelease(req.params.press_id);
+    const { press_id } = req.params;
+    console.log("Deleting press_id:", press_id);
+
+    // Start a transaction
+    await knex.transaction(async (trx) => {
+      // 1. Delete related media first
+      await trx("press_images").where("press_id", press_id).del();
+
+      // 2. Delete the press release itself
+      const deleted = await trx("press_releases")
+        .where("press_id", press_id)
+        .del();
+
+      if (deleted === 0) {
+        throw new Error("Press release not found");
+      }
+    });
+
     res.json({ message: "Deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Delete route error:", err);
+    res.status(500).json({ error: "Delete failed", details: err.message });
   }
 });
+
 router.put("/:press_id/status", async (req, res) => {
   try {
     const { press_id } = req.params;

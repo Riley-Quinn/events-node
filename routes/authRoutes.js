@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const User = require("../models/User");
+const knex = require("../db");
 const {
   authMiddleware,
   verifyToken,
@@ -69,14 +70,44 @@ router.delete("/users/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Forbidden: Access denied" });
   }
 
+  const trx = await knex.transaction();
   try {
-    await User.deleteUser(id);
+    // Press releases
+    await knex("press_releases")
+      .where("assignee_id", id)
+      .transacting(trx)
+      .update({ assignee_id: null });
+
+    await knex("press_releases")
+      .where("created_by", id)
+      .transacting(trx)
+      .update({ created_by: null });
+
+    // Tasks
+    await knex("tasks")
+      .where("assignee_id", id)
+      .transacting(trx)
+      .update({ assignee_id: null });
+
+    await knex("tasks")
+      .where("created_by", id)
+      .transacting(trx)
+      .update({ created_by: null });
+
+    // Finally delete the user
+    await knex("users").where("id", id).transacting(trx).del();
+
+    await trx.commit();
     res.json({ message: "User deleted successfully" });
   } catch (err) {
+    await trx.rollback();
     console.error("Delete User Error:", err);
-    res.status(500).json({ message: "Failed to delete user" });
+    res
+      .status(500)
+      .json({ message: "Failed to delete user", details: err.message });
   }
 });
+
 // Get user by ID
 router.get("/users/:id", verifyToken, async (req, res) => {
   try {

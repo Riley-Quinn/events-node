@@ -15,7 +15,19 @@ const getAllDrafts = async () => {
     throw error;
   }
 };
-
+const getDraftByUserId = async (userDrafts) => {
+  console.log("userDrafts:", userDrafts);
+  try {
+    const query = knex("superadmin_drafts").where(
+      "superadmin_drafts.drafts_user_id",
+      userDrafts
+    );
+    return await query;
+  } catch (err) {
+    console.error("Error fetching Superadmin drafts by ID:", err);
+    throw err;
+  }
+};
 // Get draft by title (optional)
 const getDraftByTitle = async (title) => {
   return knex("superadmin_drafts")
@@ -39,4 +51,5 @@ module.exports = {
   getDraftByTitle,
   deleteDraft,
   updateDraft,
+  getDraftByUserId,
 };
