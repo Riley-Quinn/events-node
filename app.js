@@ -49,7 +49,7 @@ app.use("/api/media", verifyToken, mediaRoutes);
 app.use("/api/events", verifyToken, eventRoutes);
 app.use("/api/comments", verifyToken, commentRoutes);
 app.use("/api/press-media", verifyToken, pressImageRoutes);
-app.use("/api/drafts", superadminDraftRoutes);
+app.use("/api/drafts", verifyToken, superadminDraftRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   res.status(500).json({ message: "Something went wrong" });

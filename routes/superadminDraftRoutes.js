@@ -7,6 +7,7 @@ const {
   getDraftByTitle,
   updateDraft,
   deleteDraft,
+  getDraftByUserId,
 } = require("../models/SuperadminDraft");
 
 // Create a new draft
@@ -26,8 +27,8 @@ router.post("/", async (req, res) => {
         .status(400)
         .json({ message: "Draft with this title already exists" });
     }
-
-    await createDraft({ Title, Description });
+    const userId = req.user.id;
+    await createDraft({ Title, Description, drafts_user_id: userId });
     res.status(201).json({ message: "Draft created successfully" });
   } catch (error) {
     console.error("Error creating draft:", error);
@@ -46,6 +47,14 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:drafts_user_id", async (req, res) => {
+  try {
+    const data = await getDraftByUserId(req.params.drafts_user_id);
+    return res.status(200).json({ list: data });
+  } catch (err) {
+    res.status(500).json({ error: "Fetch by ID failed" });
+  }
+});
 // Get draft by title
 router.get("/:title", async (req, res) => {
   try {
