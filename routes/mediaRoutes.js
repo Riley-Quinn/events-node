@@ -21,6 +21,7 @@ router.post("/upload/:event_id", upload.single("file"), async (req, res) => {
         Key: s3Key,
         Body: buffer,
         ContentType: mimetype,
+        ACL: "public-read",
       })
       .promise();
 
